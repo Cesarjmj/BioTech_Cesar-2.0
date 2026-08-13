@@ -1,0 +1,855 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="style.css">
+  <title>BlogTech Cesar - O Futuro da IA e Robótica</title>
+  <style>
+    :root {
+      --bg-dark: #05070f;
+      --card-bg: rgba(15, 23, 42, 0.75);
+      --card-hover: rgba(26, 38, 66, 0.85);
+      --card-border: rgba(56, 189, 248, 0.2);
+      --accent-blue: #38bdf8;
+      --accent-purple: #a855f7;
+      --accent-indigo: #6366f1;
+      --accent-green: #10b981;
+      --text-main: #f3f4f6;
+      --text-muted: #9ca3af;
+      --glow-blue: rgba(56, 189, 248, 0.25);
+      --glow-purple: rgba(168, 85, 247, 0.25);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    }
+
+    body {
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      line-height: 1.7;
+      padding: 0;
+      overflow-x: hidden;
+      position: relative;
+    }
+
+    /* Canvas de Partículas */
+    #particleCanvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      z-index: -1;
+      background: radial-gradient(circle at 50% 30%, #0f172a 0%, #05070f 100%);
+    }
+
+    /* Barra de Progresso Neon Topo */
+    #progress-container {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 4px;
+      background: rgba(255, 255, 255, 0.05);
+      z-index: 1000;
+    }
+
+    #progress-bar {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, var(--accent-blue), var(--accent-purple));
+      box-shadow: 0 0 12px var(--accent-blue), 0 0 24px var(--accent-purple);
+      transition: width 0.1s ease-out;
+    }
+
+    /* Navegação Header */
+    nav {
+      width: 100%;
+      padding: 20px 40px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(5, 7, 15, 0.8);
+    }
+
+    .nav-logo {
+      font-size: 1.4rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      letter-spacing: 1px;
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 20px;
+      list-style: none;
+    }
+
+    .nav-links a {
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 0.95rem;
+      transition: color 0.3s ease;
+    }
+
+    .nav-links a:hover {
+      color: var(--accent-blue);
+    }
+
+    /* Hero & Header */
+    header.hero {
+      text-align: center;
+      padding: 70px 20px 40px;
+      max-width: 900px;
+      margin: 0 auto;
+      animation: fadeInDown 1s ease-out;
+    }
+
+    header.hero h1 {
+      font-size: 3.5rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, #ffffff 20%, var(--accent-blue) 60%, var(--accent-purple) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 15px;
+      line-height: 1.2;
+    }
+
+    header.hero p {
+      color: var(--text-muted);
+      font-size: 1.2rem;
+      max-width: 700px;
+      margin: 0 auto 25px;
+    }
+
+    .hero-badge {
+      display: inline-block;
+      padding: 6px 16px;
+      border-radius: 20px;
+      background: rgba(56, 189, 248, 0.1);
+      border: 1px solid var(--card-border);
+      color: var(--accent-blue);
+      font-size: 0.85rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 15px;
+    }
+
+    /* Layout Principal: Grid com Sidebar */
+    .layout-grid {
+      display: grid;
+      grid-template-columns: 2.5fr 1fr;
+      gap: 30px;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 20px 80px;
+    }
+
+    @media (max-width: 900px) {
+      .layout-grid {
+        grid-template-columns: 1fr;
+      }
+      header.hero h1 { font-size: 2.5rem; }
+      nav { padding: 15px 20px; }
+      .nav-links { display: none; }
+    }
+
+    /* Cards e Artigos */
+    .card {
+      background: var(--card-bg);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 35px;
+      margin-bottom: 30px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+      transition: transform 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+      animation: fadeInUp 0.8s ease-out;
+    }
+
+    .card:hover {
+      transform: translateY(-4px);
+      border-color: rgba(56, 189, 248, 0.5);
+      box-shadow: 0 15px 40px var(--glow-blue);
+    }
+
+    .card-meta {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 0.85rem;
+      color: var(--accent-purple);
+      margin-bottom: 12px;
+      font-weight: 600;
+    }
+
+    .card-meta span {
+      color: var(--text-muted);
+      font-weight: normal;
+    }
+
+    .card h2 {
+      color: #fff;
+      margin-bottom: 18px;
+      font-size: 1.8rem;
+      line-height: 1.3;
+    }
+
+    .card p {
+      margin-bottom: 18px;
+      color: #d1d5db;
+    }
+
+    .card h3 {
+      color: var(--accent-blue);
+      margin: 25px 0 12px;
+      font-size: 1.3rem;
+    }
+
+    /* Highlight Quote Block */
+    blockquote {
+      border-left: 4px solid var(--accent-purple);
+      background: rgba(168, 85, 247, 0.08);
+      padding: 15px 20px;
+      margin: 20px 0;
+      border-radius: 0 8px 8px 0;
+      font-style: italic;
+      color: #e2e8f0;
+    }
+
+    /* Grid de Estatísticas Internas */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 15px;
+      margin: 25px 0;
+    }
+
+    .stat-box {
+      background: rgba(15, 23, 42, 0.9);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      padding: 20px;
+      border-radius: 12px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .stat-box::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 3px;
+      background: linear-gradient(90deg, var(--accent-blue), var(--accent-purple));
+    }
+
+    .stat-number {
+      font-size: 2.2rem;
+      font-weight: 800;
+      color: var(--accent-blue);
+      line-height: 1.1;
+      margin-bottom: 5px;
+    }
+
+    .stat-label {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    /* Tabela de Dados Explicitos */
+    .data-table-wrapper {
+      overflow-x: auto;
+      margin: 20px 0;
+    }
+
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 0.95rem;
+    }
+
+    .data-table th, .data-table td {
+      padding: 12px 16px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .data-table th {
+      background: rgba(56, 189, 248, 0.1);
+      color: var(--accent-blue);
+      font-weight: 600;
+    }
+
+    .data-table tr:hover {
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    /* Seção de Curtidas Única no Final */
+    .like-card {
+      text-align: center;
+      padding: 40px 30px;
+      background: rgba(15, 23, 42, 0.85);
+      border: 1px solid var(--accent-purple);
+      box-shadow: 0 0 30px var(--glow-purple);
+    }
+
+    .like-section {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 15px;
+      margin-top: 20px;
+    }
+
+    .like-btn {
+      background: linear-gradient(135deg, #2563eb, #7c3aed);
+      color: #fff;
+      border: none;
+      padding: 14px 28px;
+      border-radius: 30px;
+      font-size: 1.05rem;
+      font-weight: bold;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.3s ease;
+    }
+
+    .like-btn:hover {
+      transform: scale(1.05);
+      box-shadow: 0 0 25px rgba(124, 58, 237, 0.7);
+    }
+
+    .like-btn:active {
+      transform: scale(0.95);
+    }
+
+    .like-count {
+      font-size: 1.2rem;
+      color: var(--text-main);
+      font-weight: 700;
+    }
+
+    /* Sidebar Widgets */
+    .sidebar-widget {
+      background: var(--card-bg);
+      backdrop-filter: blur(16px);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 25px;
+      margin-bottom: 25px;
+    }
+
+    .sidebar-widget h3 {
+      font-size: 1.2rem;
+      color: #fff;
+      margin-bottom: 15px;
+      border-bottom: 2px solid var(--accent-purple);
+      padding-bottom: 8px;
+      display: inline-block;
+    }
+
+    .trending-list {
+      list-style: none;
+    }
+
+    .trending-list li {
+      margin-bottom: 15px;
+      font-size: 0.95rem;
+    }
+
+    .trending-list a {
+      color: #e2e8f0;
+      text-decoration: none;
+      transition: color 0.2s ease;
+      display: block;
+    }
+
+    .trending-list a:hover {
+      color: var(--accent-blue);
+    }
+
+    .trending-tag {
+      font-size: 0.75rem;
+      color: var(--accent-purple);
+      text-transform: uppercase;
+      font-weight: 700;
+    }
+
+    /* Botão Voltar ao Topo */
+    #backToTop {
+      position: fixed;
+      bottom: 30px;
+      right: 30px;
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+      color: #fff;
+      border: none;
+      font-size: 1.2rem;
+      cursor: pointer;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.3s ease, transform 0.3s ease, visibility 0.3s ease;
+      box-shadow: 0 0 20px rgba(56, 189, 248, 0.4);
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    #backToTop.show {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    #backToTop:hover {
+      transform: translateY(-4px) scale(1.08);
+      box-shadow: 0 0 25px rgba(168, 85, 247, 0.7);
+    }
+
+    /* Rodapé */
+    footer {
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      background: rgba(5, 7, 15, 0.95);
+      padding: 40px 20px;
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 0.9rem;
+    }
+
+    footer p {
+      margin-bottom: 8px;
+    }
+
+    /* Animações Keyframes */
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(25px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes fadeInDown {
+      from {
+        opacity: 0;
+        transform: translateY(-25px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .pulse {
+      animation: pulseAnim 0.3s ease;
+    }
+
+    @keyframes pulseAnim {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.4); }
+      100% { transform: scale(1); }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Barra de Progresso Topo -->
+  <div id="progress-container">
+    <div id="progress-bar"></div>
+  </div>
+
+  <!-- Fundo de Partículas Interativas (Canvas) -->
+  <canvas id="particleCanvas"></canvas>
+
+  <!-- Navegação -->
+  <nav>
+    <div class="nav-logo">BlogTech Cesar</div>
+    <ul class="nav-links">
+      <li><a href="#artigo1">Humanoide VLA</a></li>
+      <li><a href="#artigo2">Automação 2026</a></li>
+      <li><a href="#artigo3">Ética e Segurança</a></li>
+    </ul>
+  </nav>
+
+  <!-- Cabeçalho Principal / Hero -->
+  <header class="hero">
+    <span class="hero-badge">Tecnologia & Inovação</span>
+    <h1>O Futuro da Inteligência Artificial e Robótica</h1>
+    <p>Análises profundas, métricas do setor e insights sobre a revolução autônoma que está redefinindo a sociedade moderna.</p>
+  </header>
+
+  <!-- Layout Principal -->
+  <div class="layout-grid">
+
+    <!-- Coluna de Conteúdo Principal -->
+    <main>
+
+      <!-- ARTIGO 1 -->
+      <article class="card" id="artigo1">
+        <div class="card-meta">
+          <span>Publicado em 2026</span> • <span>Leitura de 6 min</span>
+        </div>
+        <h2>Robôs Humanos e Modelos VLA: A Fronteira da Ação Física</h2>
+        <p>
+          A integração entre os chamados <strong>Modelos de Visão-Linguagem-Ação (VLA)</strong> e robôs humanoides representa o maior avanço tecnológico da década.
+          Diferente dos algoritmos tradicionais restritos a ambientes virtuais, essa nova arquitetura permite que máquinas compreendam instruções em linguagem natural,
+          analisem o espaço ao seu redor via sensores ópticos e executem tarefas complexas de manipulação motora sem programação prévia.
+        </p>
+
+        <blockquote>
+          "A transição da IA puramente digital para a IA incorporada (Embedded AI) é o passo definitivo para a automação total de ambientes não estruturados."
+        </blockquote>
+
+        <h3>Dados do Setor Industrial</h3>
+        <p>Abaixo estão os indicadores do avanço global na adoção de robôs inteligentes:</p>
+
+        <div class="stats-grid">
+          <div class="stat-box">
+            <div class="stat-number">+42%</div>
+            <div class="stat-label">Crescimento de Humanoides na Indústria</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-number">120 Mi</div>
+            <div class="stat-label">Dispositivos IoT-IA Conectados</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-number">98.4%</div>
+            <div class="stat-label">Precisão em Tarefas de Manipulação</div>
+          </div>
+        </div>
+
+        <p>
+          Com esse ecossistema em expansão, indústrias automotivas, centros de distribuição logística e laboratórios médicos relatam reduções substanciais no tempo de operação,
+          além de um ganho sem precedentes em segurança laboral para atividades de alto risco.
+        </p>
+      </article>
+
+      <!-- ARTIGO 2 -->
+      <article class="card" id="artigo2">
+        <div class="card-meta">
+          <span>Tendências de Mercado</span> • <span>Leitura de 4 min</span>
+        </div>
+        <h2>Projeções da Automação Global e IA Generativa</h2>
+        <p>
+          Conforme avançamos em 2026, a convergência entre supercomputação e algoritmos de aprendizado por reforço criou um divisor de águas na eficiência corporativa.
+          A capacidade de prever falhas de maquinário antes que ocorram tornou-se o padrão da indústria 4.0.
+        </p>
+
+        <h3>Comparativo de Eficiência (Antes vs Depois da IA Incorporada)</h3>
+        <div class="data-table-wrapper">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Métrica</th>
+                <th>Sistemas Tradicionais</th>
+                <th>Sistemas Autônomos com IA</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Tempo de Inatividade Inesperado</td>
+                <td>~14% ao ano</td>
+                <td>&lt; 1.8% ao ano</td>
+              </tr>
+              <tr>
+                <td>Consumo Energético Industrial</td>
+                <td>Padrão elevado</td>
+                <td>Redução de até 28%</td>
+              </tr>
+              <tr>
+                <td>Adaptabilidade a Novos Produtos</td>
+                <td>Semanas de reconfiguração</td>
+                <td>Ajuste dinâmico em minutos</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <p>
+          O investimento global em hardware especializado para robótica superou marcas históricas, impulsionado por chips de aceleração neural de ultrabaixo consumo energético.
+        </p>
+      </article>
+
+      <!-- ARTIGO 3 -->
+      <article class="card" id="artigo3">
+        <div class="card-meta">
+          <span>Análise Crítica</span> • <span>Leitura de 5 min</span>
+        </div>
+        <h2>Ética, Cibersegurança e Governança em Agentes Autônomos</h2>
+        <p>
+          À medida que permitimos que agentes autônomos tomem decisões em tempo real, surgem importantes questionamentos éticos e desafios de cibersegurança.
+          Garantir que um sistema robótico responda de forma segura diante de cenários imprevistos exige protocolos rigorosos de alinhamento de modelo.
+        </p>
+        <p>
+          Principais pilares exigidos pela comunidade científica e regulatória:
+        </p>
+        <ul style="margin-left: 20px; color: var(--text-muted); margin-bottom: 15px;">
+          <li><strong style="color:#fff;">Auditabilidade em tempo real:</strong> Registros imutáveis de decisões tomadas por redes neurais.</li>
+          <li><strong style="color:#fff;">Mecanismos de Interrupção Seguro (Kill-Switch):</strong> Protocolos independentes do software principal para parada imediata.</li>
+          <li><strong style="color:#fff;">Criptografia Quântica-Resistente:</strong> Proteção de dados transmitidos entre robôs e servidores na nuvem.</li>
+        </ul>
+      </article>
+
+      <!-- CONTADOR DE LIKES ÚNICO NO FINAL -->
+      <div class="card like-card">
+        <h3 style="color: #fff; font-size: 1.5rem; margin: 0 0 10px;">Gostou das publicações?</h3>
+        <p style="color: var(--text-muted); margin-bottom: 15px;">Deixe seu apoio ao BlogTech Cesar para continuarmos trazendo as novidades do setor de IA e Robótica.</p>
+        <div class="like-section">
+          <button class="like-btn" id="globalLikeButton">
+            <span id="globalHeartIcon">❤️</span> Curtir o Blog
+          </button>
+          <span class="like-count" id="globalLikeDisplay">428 curtidas</span>
+        </div>
+      </div>
+
+    </main>
+
+    <!-- Sidebar Lateral -->
+    <aside>
+      <!-- Widget Tópicos em Alta -->
+      <div class="sidebar-widget">
+        <h3>Tópicos em Alta</h3>
+        <ul class="trending-list">
+          <li>
+            <span class="trending-tag">Hardware</span>
+            <a href="#">Processadores de Neuromorfismo Avançado</a>
+          </li>
+          <li>
+            <span class="trending-tag">Software</span>
+            <a href="#">Modelos VLA e Aprendizado Zero-Shot</a>
+          </li>
+          <li>
+            <span class="trending-tag">Drones</span>
+            <a href="#">Enxames Autônomos para Mapeamento</a>
+          </li>
+          <li>
+            <span class="trending-tag">Saúde</span>
+            <a href="#">Cirurgia de Alta Precisão com Robôs</a>
+          </li>
+        </ul>
+      </div>
+
+      <!-- Widget Estatística Rápida -->
+      <div class="sidebar-widget">
+        <h3>Panorama Global</h3>
+        <p style="font-size: 0.9rem; color: var(--text-muted);">
+          Estimativas apontam que até o final do ano a densidade de robôs industriais ultrapassará 160 unidades para cada 10.000 trabalhadores no mundo.
+        </p>
+      </div>
+    </aside>
+
+  </div>
+
+  <!-- Botão Voltar ao Topo -->
+  <button id="backToTop" title="Voltar ao topo">▲</button>
+
+  <!-- Rodapé -->
+  <footer>
+    <p><strong>BlogTech Cesar</strong> &copy; 2026 — Desenvolvido com foco no Futuro da Tecnologia.</p>
+    <p>Todos os direitos reservados. Design em tom Midnight & Estilização Neon.</p>
+  </footer>
+
+  <script>
+    /* ===================================================
+       1. Fundo de Partículas Interativas (HTML5 Canvas)
+       =================================================== */
+    const canvas = document.getElementById('particleCanvas');
+    const ctx = canvas.getContext('2d');
+    let particlesArray = [];
+
+    const mouse = {
+      x: null,
+      y: null,
+      radius: 130
+    };
+
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    window.addEventListener('mousemove', (e) => {
+      mouse.x = e.clientX;
+      mouse.y = e.clientY;
+    });
+
+    window.addEventListener('mouseleave', () => {
+      mouse.x = null;
+      mouse.y = null;
+    });
+
+    class Particle {
+      constructor() {
+        this.x = Math.random() * canvas.width;
+        this.y = Math.random() * canvas.height;
+        this.size = Math.random() * 2 + 1;
+        this.speedX = (Math.random() - 0.5) * 1.0;
+        this.speedY = (Math.random() - 0.5) * 1.0;
+      }
+
+      update() {
+        this.x += this.speedX;
+        this.y += this.speedY;
+
+        if (this.x < 0 || this.x > canvas.width) this.speedX *= -1;
+        if (this.y < 0 || this.y > canvas.height) this.speedY *= -1;
+      }
+
+      draw() {
+        ctx.fillStyle = '#38bdf8';
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
+    function initParticles() {
+      particlesArray = [];
+      const numberOfParticles = Math.floor((canvas.width * canvas.height) / 11000);
+      for (let i = 0; i < numberOfParticles; i++) {
+        particlesArray.push(new Particle());
+      }
+    }
+    initParticles();
+
+    function animateParticles() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      for (let i = 0; i < particlesArray.length; i++) {
+        particlesArray[i].update();
+        particlesArray[i].draw();
+
+        for (let j = i + 1; j < particlesArray.length; j++) {
+          const dx = particlesArray[i].x - particlesArray[j].x;
+          const dy = particlesArray[i].y - particlesArray[j].y;
+          const distance = Math.sqrt(dx * dx + dy * dy);
+
+          if (distance < 110) {
+            ctx.strokeStyle = `rgba(168, 85, 247, ${1 - distance / 110})`;
+            ctx.lineWidth = 0.5;
+            ctx.beginPath();
+            ctx.moveTo(particlesArray[i].x, particlesArray[i].y);
+            ctx.lineTo(particlesArray[j].x, particlesArray[j].y);
+            ctx.stroke();
+          }
+        }
+
+        if (mouse.x !== null) {
+          const dx = particlesArray[i].x - mouse.x;
+          const dy = particlesArray[i].y - mouse.y;
+          const mouseDist = Math.sqrt(dx * dx + dy * dy);
+
+          if (mouseDist < mouse.radius) {
+            ctx.strokeStyle = `rgba(56, 189, 248, ${1 - mouseDist / mouse.radius})`;
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(particlesArray[i].x, particlesArray[i].y);
+            ctx.lineTo(mouse.x, mouse.y);
+            ctx.stroke();
+          }
+        }
+      }
+
+      requestAnimationFrame(animateParticles);
+    }
+    animateParticles();
+
+    /* ===================================================
+       2. Barra de Progresso de Leitura Neon
+       =================================================== */
+    const progressBar = document.getElementById('progress-bar');
+
+    window.addEventListener('scroll', () => {
+      const totalScroll = document.documentElement.scrollTop;
+      const windowHeight = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+      const scrollPercentage = (totalScroll / windowHeight) * 100;
+      progressBar.style.width = scrollPercentage + '%';
+    });
+
+    /* ===================================================
+       3. Único Contador de Likes com LocalStorage no Final
+       =================================================== */
+    const DEFAULT_LIKES = 428;
+    const globalLikeButton = document.getElementById('globalLikeButton');
+    const globalLikeDisplay = document.getElementById('globalLikeDisplay');
+    const globalHeartIcon = document.getElementById('globalHeartIcon');
+
+    let totalLikes = parseInt(localStorage.getItem('blogtech_global_likes_count')) || DEFAULT_LIKES;
+    let userHasLiked = localStorage.getItem('blogtech_global_user_liked') === 'true';
+
+    function updateGlobalLikeUI() {
+      globalLikeDisplay.textContent = `${totalLikes} curtidas`;
+      if (userHasLiked) {
+        globalLikeButton.style.background = 'linear-gradient(135deg, #10b981, #059669)';
+      } else {
+        globalLikeButton.style.background = 'linear-gradient(135deg, #2563eb, #7c3aed)';
+      }
+    }
+
+    updateGlobalLikeUI();
+
+    globalLikeButton.addEventListener('click', () => {
+      if (!userHasLiked) {
+        totalLikes++;
+        userHasLiked = true;
+      } else {
+        totalLikes--;
+        userHasLiked = false;
+      }
+
+      localStorage.setItem('blogtech_global_likes_count', totalLikes);
+      localStorage.setItem('blogtech_global_user_liked', userHasLiked);
+
+      updateGlobalLikeUI();
+
+      globalHeartIcon.classList.add('pulse');
+      setTimeout(() => globalHeartIcon.classList.remove('pulse'), 300);
+    });
+
+    /* ===================================================
+       4. Botão Flutuante "Voltar ao Topo" (Smooth Scroll)
+       =================================================== */
+    const backToTopBtn = document.getElementById('backToTop');
+
+    window.addEventListener('scroll', () => {
+      if (window.scrollY > 350) {
+        backToTopBtn.classList.add('show');
+      } else {
+        backToTopBtn.classList.remove('show');
+      }
+    });
+
+    backToTopBtn.addEventListener('click', () => {
+      window.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+      });
+    });
+  </script>
+</body>
+</html>
